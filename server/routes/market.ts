@@ -3,15 +3,18 @@ import { simulateDisruption } from "../agents";
 import { db } from "../db";
 import { getCachedCommodities } from "../providers/commodityProvider";
 import { rankSuppliers } from "../services/marketService";
+import { agentOrchestrator } from "../agents";
 
 export const marketRouter = Router();
 
 marketRouter.get("/", (_req, res) => {
-  const ranked = rankSuppliers();
+  const run = agentOrchestrator.run({ requestType: "procurement" });
   res.json({
     commodities: getCachedCommodities(),
-    suppliers: ranked.ranked,
-    purchaseOrder: ranked.po
+    suppliers: run.procurement.rankedSuppliers,
+    purchaseOrder: run.procurement.purchaseOrder,
+    procurementAgent: run.procurement,
+    agentRun: run
   });
 });
 
@@ -32,10 +35,10 @@ marketRouter.post("/", async (req, res) => {
       return res.json(result);
     }
 
-    const ranked = rankSuppliers();
+    const run = agentOrchestrator.run({ requestType: "procurement" });
     const settings = db.get("settings");
-    db.logAction("operator_alpha", settings.activeRole, "PROCUREMENT_STRATEGY_GENERATED", `Generated sourcing ranking for top country: ${ranked.ranked[0].country}`);
-    return res.json(ranked);
+    db.logAction("operator_alpha", settings.activeRole, "PROCUREMENT_STRATEGY_GENERATED", `Generated sourcing ranking for top country: ${run.procurement.rankedSuppliers[0].country}`);
+    return res.json({ ranked: run.procurement.rankedSuppliers, po: run.procurement.purchaseOrder, procurementAgent: run.procurement, agentRun: run });
   } catch (_error) {
     return res.status(500).json({ error: "Failed to process market request." });
   }

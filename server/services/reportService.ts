@@ -2,6 +2,7 @@ import { db } from "../db";
 import type { ReportMeta } from "../models/aggregation";
 import { getCachedGovernmentData } from "../providers/governmentDataProvider";
 import { rankSuppliers } from "./marketService";
+import { agentOrchestrator } from "../agents";
 
 export function listReports(): ReportMeta[] {
   return [
@@ -17,6 +18,7 @@ export function generateReport(reportType = "Daily Briefing"): Required<ReportMe
   const government = getCachedGovernmentData();
   const { ranked } = rankSuppliers();
   const topSupplier = ranked[0];
+  const agentRun = agentOrchestrator.run({ requestType: "briefing", reportType });
 
   let markdownReport = `# AURA Executive Intelligence Briefing\n`;
   markdownReport += `Date: ${new Date().toLocaleDateString()} | Node: SECURE_09 | Classification: SECRET // REL IND\n\n`;

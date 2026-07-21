@@ -8,6 +8,7 @@ import { generateReport, listReports } from "../services/reportService";
 import { logger } from "../utils/logger";
 import { createRateLimiter } from "../utils/rateLimit";
 import { dashboardRouter } from "./dashboard";
+import { agentsRouter } from "./agents";
 import { graphRouter } from "./graph";
 import { marketRouter } from "./market";
 import { newsRouter } from "./news";
@@ -37,6 +38,7 @@ export function createApiRouter() {
   router.use("/weather", weatherRouter);
   router.use("/ships", shipsRouter);
   router.use("/graph", graphRouter);
+  router.use("/agents", agentsRouter);
 
   attachCompatibilityRoutes(router);
   return router;
