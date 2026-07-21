@@ -7,7 +7,6 @@
 
 *Predict • Simulate • Respond*
 
-<img src="docs/banner.png" alt="AURA Banner" width="100%"/>
 
 </div>
 
