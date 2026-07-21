@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Settings as SettingsIcon, ShieldCheck, Cpu, RefreshCw, 
   Terminal, ShieldAlert, Key, Save, Bell
@@ -47,7 +47,7 @@ export default function Settings() {
   const fetchSettingsAndLogs = () => {
     setIsLoading(true);
     // Fetch Settings
-    fetch('/api/settings')
+    fetch('/api/dashboard?resource=settings')
       .then(r => r.json())
       .then((data: SystemSettings) => {
         setSettings(data);
@@ -62,7 +62,7 @@ export default function Settings() {
       .catch(err => console.error("Failed to load settings:", err));
 
     // Fetch Audit Logs
-    fetch('/api/audit')
+    fetch('/api/dashboard?resource=audit')
       .then(r => r.json())
       .then(data => setAuditLogs(data))
       .catch(err => console.error("Failed to load audit logs:", err))
@@ -83,17 +83,17 @@ export default function Settings() {
       systemTheme: theme
     };
 
-    fetch('/api/settings', {
+    fetch('/api/dashboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updateObj)
+      body: JSON.stringify({ action: 'updateSettings', settings: updateObj })
     })
       .then(r => r.json())
       .then((data) => {
         setSettings(data);
         setSaveSuccess(true);
         // Refresh logs to show settings audit
-        fetch('/api/audit')
+        fetch('/api/dashboard?resource=audit')
           .then(r => r.json())
           .then(logs => setAuditLogs(logs));
         setTimeout(() => setSaveSuccess(false), 2000);
@@ -269,3 +269,7 @@ export default function Settings() {
     </div>
   );
 }
+
+
+
+

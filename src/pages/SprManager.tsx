@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Database, Battery, AlertTriangle, Play, Cpu, TrendingDown, 
   ArrowRight, ShieldCheck, RefreshCw, BarChart2
@@ -26,7 +26,7 @@ export default function SprManager() {
 
   const fetchSprData = () => {
     setIsLoading(true);
-    fetch('/api/spr')
+    fetch('/api/dashboard?resource=spr')
       .then(r => r.json())
       .then(data => {
         setCaverns(data.caverns);
@@ -175,3 +175,4 @@ export default function SprManager() {
     </div>
   );
 }
+

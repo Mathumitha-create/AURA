@@ -189,12 +189,23 @@ export default function MapContainer() {
   const [showShippingLanes, setShowShippingLanes] = useState(true);
   const [showWeather, setShowWeather] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
+  const [mapAssets, setMapAssets] = useState<MapAsset[]>([]);
 
   // Selected Overlay Asset
-  const [selectedAsset, setSelectedAsset] = useState<MapAsset | null>(MAP_ASSETS[3]); // Default Strait of Hormuz open
+  const [selectedAsset, setSelectedAsset] = useState<MapAsset | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/ships?resource=mapAssets')
+      .then(r => r.json())
+      .then((data: MapAsset[]) => {
+        setMapAssets(data);
+        setSelectedAsset(data.find(asset => asset.id === 'choke-hormuz') || data[0] || null);
+      })
+      .catch(err => console.error("Failed to load maritime map assets:", err));
+  }, []);
 
   // Zoom controls
   const zoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 3));
@@ -438,7 +449,7 @@ export default function MapContainer() {
             )}
 
             {/* Assets: Refineries */}
-            {showRefineries && MAP_ASSETS.filter(a => a.type === 'refinery').map(asset => (
+            {showRefineries && mapAssets.filter(a => a.type === 'refinery').map(asset => (
               <g 
                 key={asset.id} 
                 transform={`translate(${asset.coordinates.x}, ${asset.coordinates.y})`}
@@ -457,7 +468,7 @@ export default function MapContainer() {
             ))}
 
             {/* Assets: Chokepoints */}
-            {showChokepoints && MAP_ASSETS.filter(a => a.type === 'chokepoint').map(asset => {
+            {showChokepoints && mapAssets.filter(a => a.type === 'chokepoint').map(asset => {
               const isHighRisk = asset.riskScore > 75;
               return (
                 <g 
@@ -488,7 +499,7 @@ export default function MapContainer() {
             })}
 
             {/* Assets: Live Tankers */}
-            {showTankers && MAP_ASSETS.filter(a => a.type === 'tanker').map(asset => (
+            {showTankers && mapAssets.filter(a => a.type === 'tanker').map(asset => (
               <g 
                 key={asset.id} 
                 transform={`translate(${asset.coordinates.x}, ${asset.coordinates.y})`}

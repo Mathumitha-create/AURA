@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Sparkles, X, Send, Bot, Terminal, ShieldAlert, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -39,10 +39,10 @@ export default function FloatingCopilotButton() {
     setIsTyping(true);
 
     // Query the live RAG API on backend
-    fetch('/api/copilot', {
+    fetch('/api/dashboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: query })
+      body: JSON.stringify({ action: 'copilot', message: query })
     })
     .then(r => {
       if (!r.ok) throw new Error("Backend query failed");
@@ -54,7 +54,7 @@ export default function FloatingCopilotButton() {
 **IMPACT:** ${data.impact}
 
 **RECOMMENDED ACTIONS:**
-${data.recommendedActions.map((act: string) => `• ${act}`).join('\n')}
+${data.recommendedActions.map((act: string) => `â€¢ ${act}`).join('\n')}
 
 **FINANCIAL DETAIL:** ${data.financialImpact}
 *(Confidence: ${data.confidence}% | Sources: ${data.sources.join(', ')})*`;
@@ -74,7 +74,7 @@ ${data.recommendedActions.map((act: string) => `• ${act}`).join('\n')}
       const lower = query.toLowerCase();
 
       if (lower.includes('hormuz') || lower.includes('threat') || lower.includes('close')) {
-        responseText = "**SITUATION:** Strait of Hormuz threat factors indicate critical patrols.\n\n**IMPACT:** Persian Gulf imports delayed by 10-14 days due to rertouring.\n\n**RECOMMENDATIONS:**\n• Initiate SPR cavern drawdown.\n• Sourced alternative spot crude from Nigeria.";
+        responseText = "**SITUATION:** Strait of Hormuz threat factors indicate critical patrols.\n\n**IMPACT:** Persian Gulf imports delayed by 10-14 days due to rertouring.\n\n**RECOMMENDATIONS:**\nâ€¢ Initiate SPR cavern drawdown.\nâ€¢ Sourced alternative spot crude from Nigeria.";
       } else if (lower.includes('price') || lower.includes('brent')) {
         responseText = "**BRENT REPORT:** Brent Crude currently trading at $87.00/bbl (+4.2% daily gain). High risk premiums apply on all Suez Canal bound tankers.";
       } else if (lower.includes('spr') || lower.includes('reserve')) {
@@ -218,3 +218,5 @@ ${data.recommendedActions.map((act: string) => `• ${act}`).join('\n')}
     </>
   );
 }
+
+

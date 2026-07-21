@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Anchor, Activity, ShieldAlert, Cpu, Battery, Database, Settings, 
   HelpCircle, AlertTriangle, Radio, Server, Network
@@ -68,7 +68,20 @@ const TWIN_CONNECTIONS: TwinConnection[] = [
 ];
 
 export default function DigitalTwin() {
-  const [selectedNode, setSelectedNode] = useState<TwinNode | null>(TWIN_NODES[0]);
+  const [nodes, setNodes] = useState<TwinNode[]>([]);
+  const [connections, setConnections] = useState<TwinConnection[]>([]);
+  const [selectedNode, setSelectedNode] = useState<TwinNode | null>(null);
+
+  useEffect(() => {
+    fetch('/api/dashboard?resource=digitalTwin')
+      .then(r => r.json())
+      .then(data => {
+        setNodes(data.nodes || []);
+        setConnections(data.connections || []);
+        setSelectedNode((data.nodes && data.nodes[0]) || null);
+      })
+      .catch(err => console.error("Failed to load digital twin data:", err));
+  }, []);
 
   const getNodeColor = (status: string) => {
     if (status === 'alert') return 'border-red-500 text-red-500 bg-red-500/10 shadow-red-500/25';
@@ -104,9 +117,9 @@ export default function DigitalTwin() {
 
           {/* SVG Connector Lines */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1000 500" preserveAspectRatio="none">
-            {TWIN_CONNECTIONS.map((conn, idx) => {
-              const fromNode = TWIN_NODES.find(n => n.id === conn.from);
-              const toNode = TWIN_NODES.find(n => n.id === conn.to);
+            {connections.map((conn, idx) => {
+              const fromNode = nodes.find(n => n.id === conn.from);
+              const toNode = nodes.find(n => n.id === conn.to);
               if (!fromNode || !toNode) return null;
 
               return (
@@ -135,7 +148,7 @@ export default function DigitalTwin() {
 
           {/* Render interactive nodes */}
           <div className="absolute inset-0 z-10 w-full h-full pointer-events-none">
-            {TWIN_NODES.map((node) => {
+            {nodes.map((node) => {
               const isSelected = selectedNode?.id === node.id;
               return (
                 <button

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MapContainer from '../components/MapContainer';
 import KpiCard from '../components/KpiCard';
 import { 
@@ -25,12 +25,35 @@ interface Article {
   };
 }
 
+interface DashboardKpis {
+  importDependency: { value: string; subtitle: string; extraInfo: string };
+  sprBuffer: { value: string; subtitle: string; extraInfo: string };
+  brentCrude: {
+    value: string;
+    subtitle: string;
+    extraInfo: string;
+    trend: { value: string; isPositive: boolean };
+  };
+  activeThreats: { value: string; subtitle: string; extraInfo: string };
+}
+
 export default function CommandCenter() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    setIsDashboardLoading(true);
+    fetch('/api/dashboard')
+      .then(r => r.json())
+      .then(data => setKpis(data.kpis))
+      .catch(err => console.error("Failed to load dashboard aggregation:", err))
+      .finally(() => setIsDashboardLoading(false));
+  }, [refreshTrigger]);
 
   // Fetch news articles from backend
   useEffect(() => {
@@ -46,7 +69,7 @@ export default function CommandCenter() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/news/ingest', {
+      const response = await fetch('/api/news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,31 +107,31 @@ export default function CommandCenter() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="cc-kpis">
         <KpiCard
           title="IMPORT DEPENDENCY"
-          value="88%"
-          subtitle="OF TOTAL CRUDE DEMAND"
-          extraInfo="Load balanced"
+          value={isDashboardLoading ? "..." : kpis?.importDependency.value || "--"}
+          subtitle={kpis?.importDependency.subtitle || "OF TOTAL CRUDE DEMAND"}
+          extraInfo={kpis?.importDependency.extraInfo || "Loading data"}
           icon={<TrendingUp className="h-3.5 w-3.5" />}
         />
         <KpiCard
           title="SPR BUFFER"
-          value="9.5 Days"
-          subtitle="NET IMPORT COVER"
-          extraInfo="Secured status"
+          value={isDashboardLoading ? "..." : kpis?.sprBuffer.value || "--"}
+          subtitle={kpis?.sprBuffer.subtitle || "NET IMPORT COVER"}
+          extraInfo={kpis?.sprBuffer.extraInfo || "Loading data"}
           icon={<Battery className="h-3.5 w-3.5 text-emerald-400" />}
         />
         <KpiCard
           title="BRENT CRUDE PRICE"
-          value="$87.00/bbl"
-          subtitle="VOLATILITY DEVIATION"
-          extraInfo="+4.2% daily delta"
-          trend={{ value: "+4.2%", isPositive: true }}
+          value={isDashboardLoading ? "..." : kpis?.brentCrude.value || "--"}
+          subtitle={kpis?.brentCrude.subtitle || "VOLATILITY DEVIATION"}
+          extraInfo={kpis?.brentCrude.extraInfo || "Loading data"}
+          trend={kpis?.brentCrude.trend || { value: "--", isPositive: true }}
           icon={<TrendingUp className="h-3.5 w-3.5 text-red-500" />}
         />
         <KpiCard
           title="ACTIVE SECTOR THREATS"
-          value="2 Critical"
-          subtitle="GEOPOLITICAL MARITIME RISKS"
-          extraInfo="AI Confidence: 96%"
+          value={isDashboardLoading ? "..." : kpis?.activeThreats.value || "--"}
+          subtitle={kpis?.activeThreats.subtitle || "GEOPOLITICAL MARITIME RISKS"}
+          extraInfo={kpis?.activeThreats.extraInfo || "Loading data"}
           icon={<ShieldAlert className="h-3.5 w-3.5 text-red-500 animate-pulse" />}
         />
       </div>
@@ -142,7 +165,7 @@ export default function CommandCenter() {
                 <div className="flex items-center justify-between font-mono text-[9px] text-gray-500">
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-400 font-bold uppercase">{art.source}</span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {new Date(art.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -213,3 +236,4 @@ export default function CommandCenter() {
     </div>
   );
 }
+

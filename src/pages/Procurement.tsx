@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Anchor, ShieldAlert, Cpu, ArrowRight, ShieldCheck, CheckCircle, 
   TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight
@@ -39,10 +39,10 @@ export default function Procurement() {
 
   const fetchRankings = () => {
     setIsLoading(true);
-    fetch('/api/procurement/rank', {
+    fetch('/api/market', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ disruptionType: 'hormuz', severityPercent: 85 })
+      body: JSON.stringify({ action: 'rank', disruptionType: 'hormuz', severityPercent: 85 })
     })
       .then(r => r.json())
       .then(data => {
@@ -253,3 +253,5 @@ export default function Procurement() {
     </div>
   );
 }
+
+

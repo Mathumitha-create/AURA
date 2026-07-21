@@ -181,6 +181,114 @@
   ],
   "auditLogs": [
     {
+      "id": "log-1784654974969",
+      "timestamp": "2026-07-21T17:29:34.969Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784654974965",
+      "timestamp": "2026-07-21T17:29:34.965Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784627072538",
+      "timestamp": "2026-07-21T09:44:32.538Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784627072534",
+      "timestamp": "2026-07-21T09:44:32.534Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784626457339",
+      "timestamp": "2026-07-21T09:34:17.339Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784626457336",
+      "timestamp": "2026-07-21T09:34:17.336Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784626403024",
+      "timestamp": "2026-07-21T09:33:23.024Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784626403022",
+      "timestamp": "2026-07-21T09:33:23.022Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784626391330",
+      "timestamp": "2026-07-21T09:33:11.330Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784626391328",
+      "timestamp": "2026-07-21T09:33:11.328Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784626386645",
+      "timestamp": "2026-07-21T09:33:06.645Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784626386642",
+      "timestamp": "2026-07-21T09:33:06.642Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
       "id": "log-1784619591045",
       "timestamp": "2026-07-21T07:39:51.045Z",
       "username": "operator_alpha",

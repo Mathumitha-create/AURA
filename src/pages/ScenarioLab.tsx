@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   AlertTriangle, Cpu, TrendingUp, RefreshCw, BarChart2, 
   HelpCircle, ShieldCheck, Battery, DollarSign, Activity
@@ -33,10 +33,10 @@ export default function ScenarioLab() {
 
   const runSimulation = () => {
     setIsLoading(true);
-    fetch('/api/scenario/simulate', {
+    fetch('/api/market', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: disruptionType, percent: severityPercent })
+      body: JSON.stringify({ action: 'simulate', type: disruptionType, percent: severityPercent })
     })
       .then(r => r.json())
       .then(data => setResult(data))
@@ -225,3 +225,5 @@ export default function ScenarioLab() {
     </div>
   );
 }
+
+

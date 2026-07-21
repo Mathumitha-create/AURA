@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   FileText, Download, Printer, Cpu, RefreshCw, 
   CheckCircle, PlusCircle, Server, Table
@@ -33,7 +33,7 @@ export default function Reports() {
 
   const fetchReports = () => {
     setIsLoading(true);
-    fetch('/api/reports')
+    fetch('/api/news?resource=reports')
       .then(r => r.json())
       .then(data => {
         setReports(data);
@@ -50,7 +50,7 @@ export default function Reports() {
     // Generate report locally or simulate load
     setIsLoading(true);
     // Mimic API report fetch
-    fetch('/api/reports')
+    fetch('/api/news?resource=reports')
       .then(r => r.json())
       .then(data => {
         const found = data.find((r: any) => r.id === id);
@@ -97,10 +97,10 @@ export default function Reports() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/reports/generate', {
+      const response = await fetch('/api/news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportType })
+        body: JSON.stringify({ action: 'generateReport', reportType })
       });
 
       if (response.ok) {
@@ -128,7 +128,7 @@ export default function Reports() {
   };
 
   const handleDownloadRiskCsv = () => {
-    fetch('/api/georisk')
+    fetch('/api/dashboard?resource=riskScores')
       .then(r => r.json())
       .then(data => {
         let csvContent = "Region/Country,Category,Risk Score,Trend,Last Updated\n";
@@ -279,3 +279,7 @@ export default function Reports() {
     </div>
   );
 }
+
+
+
+

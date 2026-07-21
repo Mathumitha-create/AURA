@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, Send, Bot, Terminal, ShieldAlert, Cpu, 
   Printer, Download, ShieldCheck, HelpCircle, FileText
@@ -62,10 +62,10 @@ export default function AiCopilotPage() {
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/copilot', {
+      const response = await fetch('/api/dashboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query })
+        body: JSON.stringify({ action: 'copilot', message: query })
       });
 
       if (response.ok) {
@@ -193,7 +193,7 @@ export default function AiCopilotPage() {
                       <ul className="space-y-1">
                         {msg.data.recommendedActions.map((act, idx) => (
                           <li key={idx} className="text-[11px] text-gray-300 leading-normal flex items-start gap-1.5 font-sans print:text-black">
-                            <span className="text-brand-gold font-bold font-mono shrink-0">•</span>
+                            <span className="text-brand-gold font-bold font-mono shrink-0">â€¢</span>
                             <span>{act}</span>
                           </li>
                         ))}
@@ -272,3 +272,5 @@ export default function AiCopilotPage() {
     </div>
   );
 }
+
+
