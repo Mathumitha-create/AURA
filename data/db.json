@@ -1,0 +1,428 @@
+{
+  "articles": [
+    {
+      "id": "art-001",
+      "title": "Iranian Naval Patrols Intimidating Commercial Vessels Near Hormuz",
+      "source": "Reuters",
+      "publishedAt": "2026-07-21T05:24:34.850Z",
+      "content": "Local maritime observers report increased maneuvers by speedboats belonging to the Iranian Revolutionary Guard near the shipping lanes of the Strait of Hormuz. Tankers have been advised to maintain standard security spacing.",
+      "analyzed": true,
+      "analysis": {
+        "location": "Strait of Hormuz",
+        "threat": "Harassment of commercial vessels by foreign naval speedboats",
+        "country": "Iran",
+        "companies": [
+          "IRGC Navy",
+          "National Iranian Tanker Co"
+        ],
+        "oilImpact": "Elevated insurance premium risks; potential shipping delays of 24-48 hours.",
+        "confidence": 92,
+        "priority": "high",
+        "oneSentenceSummary": "Iranian naval activity increased near Strait of Hormuz, raising shipping delays and regional insurance risk.",
+        "riskScoreDelta": 8
+      }
+    },
+    {
+      "id": "art-002",
+      "title": "Bab-el-Mandeb Chokepoint Alerts: Drone Activity Reported over Red Sea Cargo lanes",
+      "source": "AP News",
+      "publishedAt": "2026-07-21T02:24:34.850Z",
+      "content": "Multiple cargo vessels reported sighting unmanned aerial vehicles flying at low altitudes near the southern gates of the Red Sea. No vessel damage was reported, but naval defense systems are on alert.",
+      "analyzed": true,
+      "analysis": {
+        "location": "Bab-el-Mandeb Strait",
+        "threat": "Drone sightings near commercial shipping lanes",
+        "country": "Yemen / Regional Hotspot",
+        "companies": [
+          "Red Sea Carriers Assoc"
+        ],
+        "oilImpact": "Forcing tankers to consider alternative routing via Cape of Good Hope, adding 9-12 days.",
+        "confidence": 88,
+        "priority": "critical",
+        "oneSentenceSummary": "Drone activity near Bab-el-Mandeb Strait triggers military alert and routing safety concerns for Red Sea tankers.",
+        "riskScoreDelta": 12
+      }
+    },
+    {
+      "id": "art-003",
+      "title": "OPEC+ Considers Further Voluntary Crude Production Cuts to Stabilize Pricing",
+      "source": "Bloomberg",
+      "publishedAt": "2026-07-20T19:24:34.850Z",
+      "content": "An internal circular indicates OPEC delegates are reviewing a voluntary production cut of up to 500,000 barrels per day ahead of the upcoming ministerial session. Traders react as Brent prices push upward.",
+      "analyzed": true,
+      "analysis": {
+        "location": "Vienna / Global Market",
+        "threat": "Voluntary output cuts reducing global spare capacity",
+        "country": "OPEC / Russia / Saudi Arabia",
+        "companies": [
+          "Saudi Aramco",
+          "Rosneft"
+        ],
+        "oilImpact": "Reduction of active supply, driving Brent Crude prices towards $87-$90/bbl.",
+        "confidence": 95,
+        "priority": "medium",
+        "oneSentenceSummary": "OPEC+ voluntarily considers 500k bpd crude cuts, tightening global supply and increasing Brent prices.",
+        "riskScoreDelta": 4
+      }
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-001",
+      "type": "security",
+      "title": "Strait of Hormuz Geopolitical Threat Elevated",
+      "message": "Active naval intimidation patrols reported. Risk index increased to 85.",
+      "severity": "critical",
+      "timestamp": "2026-07-21T05:24:34.850Z",
+      "acknowledged": false,
+      "nodeId": "hormuz"
+    },
+    {
+      "id": "alert-002",
+      "type": "market",
+      "title": "Brent Crude Volatility Warning",
+      "message": "Brent crude prices spiked +4.2% today, currently holding at $87.00/bbl.",
+      "severity": "warning",
+      "timestamp": "2026-07-21T01:24:34.850Z",
+      "acknowledged": true
+    }
+  ],
+  "riskScores": [
+    {
+      "id": "risk-hormuz",
+      "name": "Strait of Hormuz",
+      "category": "chokepoint",
+      "score": 85,
+      "trend": "up",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Active naval patrols, high geopolitical tensions, threat of cargo inspections."
+    },
+    {
+      "id": "risk-bab",
+      "name": "Bab-el-Mandeb",
+      "category": "chokepoint",
+      "score": 78,
+      "trend": "up",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Unmanned aerial vehicle threats and regional rebel activity."
+    },
+    {
+      "id": "risk-suez",
+      "name": "Suez Canal",
+      "category": "chokepoint",
+      "score": 50,
+      "trend": "stable",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Congestion due to Red Sea diversions but canal itself is fully open."
+    },
+    {
+      "id": "risk-cape",
+      "name": "Cape of Good Hope",
+      "category": "chokepoint",
+      "score": 15,
+      "trend": "down",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Safe but lengthy alternative route; increased commercial traffic."
+    },
+    {
+      "id": "risk-iran",
+      "name": "Iran",
+      "category": "country",
+      "score": 82,
+      "trend": "up",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Aggressive naval posturing, enrichment milestones, and sanction friction."
+    },
+    {
+      "id": "risk-saudi",
+      "name": "Saudi Arabia",
+      "category": "country",
+      "score": 35,
+      "trend": "stable",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Production adjustments inline with OPEC guidelines; infrastructure secure."
+    },
+    {
+      "id": "risk-russia",
+      "name": "Russia",
+      "category": "country",
+      "score": 72,
+      "trend": "stable",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Sanction enforcement, shadow fleet operations, and Western export blocks."
+    },
+    {
+      "id": "risk-usa",
+      "name": "United States",
+      "category": "country",
+      "score": 20,
+      "trend": "stable",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Record shale volumes offsetting Middle East shortfalls; ports running nominally."
+    },
+    {
+      "id": "risk-nigeria",
+      "name": "Nigeria",
+      "category": "country",
+      "score": 45,
+      "trend": "down",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Minor delta port unrest but Bonny Light exports loading at target rates."
+    },
+    {
+      "id": "risk-opec",
+      "name": "OPEC",
+      "category": "organization",
+      "score": 55,
+      "trend": "up",
+      "lastUpdated": "2026-07-21T07:24:34.850Z",
+      "details": "Active quota enforcement, targeting price floor stabilization."
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "log-1784619591045",
+      "timestamp": "2026-07-21T07:39:51.045Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 80% severity"
+    },
+    {
+      "id": "log-1784619590013",
+      "timestamp": "2026-07-21T07:39:50.013Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 80% severity"
+    },
+    {
+      "id": "log-1784619588838",
+      "timestamp": "2026-07-21T07:39:48.838Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 80% severity"
+    },
+    {
+      "id": "log-1784619586334",
+      "timestamp": "2026-07-21T07:39:46.334Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 80% severity"
+    },
+    {
+      "id": "log-1784619586120",
+      "timestamp": "2026-07-21T07:39:46.120Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 70% severity"
+    },
+    {
+      "id": "log-1784619585406",
+      "timestamp": "2026-07-21T07:39:45.406Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 60% severity"
+    },
+    {
+      "id": "log-1784619579421",
+      "timestamp": "2026-07-21T07:39:39.421Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784619579417",
+      "timestamp": "2026-07-21T07:39:39.417Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784619199243",
+      "timestamp": "2026-07-21T07:33:19.243Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784619199237",
+      "timestamp": "2026-07-21T07:33:19.237Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784619108262",
+      "timestamp": "2026-07-21T07:31:48.262Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784619108259",
+      "timestamp": "2026-07-21T07:31:48.259Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "PROCUREMENT_STRATEGY_GENERATED",
+      "ipAddress": "127.0.0.1",
+      "details": "Generated sourcing ranking for top country: United States"
+    },
+    {
+      "id": "log-1784619103176",
+      "timestamp": "2026-07-21T07:31:43.176Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784619103171",
+      "timestamp": "2026-07-21T07:31:43.171Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618825882",
+      "timestamp": "2026-07-21T07:27:05.882Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618825879",
+      "timestamp": "2026-07-21T07:27:05.879Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618812606",
+      "timestamp": "2026-07-21T07:26:52.606Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618812604",
+      "timestamp": "2026-07-21T07:26:52.604Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618801925",
+      "timestamp": "2026-07-21T07:26:41.925Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618801924",
+      "timestamp": "2026-07-21T07:26:41.924Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618793613",
+      "timestamp": "2026-07-21T07:26:33.613Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618793610",
+      "timestamp": "2026-07-21T07:26:33.610Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618784530",
+      "timestamp": "2026-07-21T07:26:24.530Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-1784618784527",
+      "timestamp": "2026-07-21T07:26:24.527Z",
+      "username": "operator_alpha",
+      "role": "NEXUS COMMANDER",
+      "action": "SCENARIO_SIMULATION_RUN",
+      "ipAddress": "127.0.0.1",
+      "details": "Simulated hormuz disruption at 50% severity"
+    },
+    {
+      "id": "log-001",
+      "timestamp": "2026-07-20T07:24:34.850Z",
+      "username": "admin_nexus",
+      "role": "NEXUS COMMANDER",
+      "action": "USER_AUTHENTICATION_SUCCESS",
+      "ipAddress": "10.240.12.19",
+      "details": "Secure biometric SSO decryption approved for Commander Nexus Peak."
+    },
+    {
+      "id": "log-002",
+      "timestamp": "2026-07-20T08:24:34.850Z",
+      "username": "admin_nexus",
+      "role": "NEXUS COMMANDER",
+      "action": "SYSTEM_BOOTLOAD_SUCCESS",
+      "ipAddress": "10.240.12.19",
+      "details": "AURA Secure Node_09 loaded with 12ms quantum-linked latency."
+    }
+  ],
+  "settings": {
+    "activeRole": "NEXUS COMMANDER",
+    "geminiApiKey": "",
+    "refreshIntervalSeconds": 30,
+    "emailAlertsEnabled": true,
+    "smsAlertsEnabled": false,
+    "desktopNotificationsEnabled": true,
+    "bypassHandshake": false,
+    "systemTheme": "dark"
+  }
+}

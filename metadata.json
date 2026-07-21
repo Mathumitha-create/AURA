@@ -1,0 +1,6 @@
+{
+  "name": "AURA – Autonomous Unified Resilience & Response AI",
+  "description": "An AI-powered Energy Security Command Center for monitoring global crude oil supply chains, geopolitical risks, and procurement intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
