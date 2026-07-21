@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { db, Article, RiskScore, Alert } from "./db";
+import { calculateGraphRisk, updateGraphFromNewsArticle } from "./services/graphService";
 
 // Initialize Gemini client helper
 function getGeminiClient(): GoogleGenAI | null {
@@ -84,6 +85,8 @@ Return ONLY the raw JSON string matching the structure above. Do not include mar
   articles.unshift(newArticle);
   if (articles.length > 50) articles.pop();
   db.update("articles", articles);
+
+  updateGraphFromNewsArticle(newArticle);
 
   // Apply risk score delta to relevant region
   if (analysis) {
@@ -250,7 +253,19 @@ Return only a JSON array of updated score objects containing "id" and the new in
     }
   }
 
-  return scores;
+  const graphRisk = calculateGraphRisk() as any[];
+  const riskByLabel = new Map(graphRisk.map(item => [String(item.node.label).toLowerCase(), item.propagatedRisk]));
+  const graphAdjusted = scores.map(score => {
+    const propagated = riskByLabel.get(score.name.toLowerCase());
+    if (!propagated) return score;
+    return {
+      ...score,
+      score: Math.round((score.score + propagated) / 2),
+      trend: propagated > score.score ? 'up' as const : propagated < score.score ? 'down' as const : 'stable' as const,
+      lastUpdated: new Date().toISOString()
+    };
+  });
+  return graphAdjusted;
 }
 
 /**
@@ -270,14 +285,28 @@ export interface SimulationResult {
   executiveSummary: string;
 }
 
+
+function getScenarioGraphRisk(type: string) {
+  const riskMap: Record<string, string> = {
+    hormuz: "chokepoint-hormuz",
+    redsea: "chokepoint-bab-el-mandeb",
+    opec: "org-opec",
+    cyclone: "port-jamnagar"
+  };
+  const result = calculateGraphRisk(riskMap[type] || riskMap.hormuz) as any;
+  return Number(result?.propagatedRisk ?? 50);
+}
+
 export async function simulateDisruption(type: string, percent: number): Promise<SimulationResult> {
   const ai = getGeminiClient();
+  const scenarioGraphRisk = getScenarioGraphRisk(type);
 
   if (ai) {
     try {
       const prompt = `Simulate an energy disruption event in India's oil supply chain:
 Disruption Event: ${type}
 Severity: ${percent}%
+Knowledge Graph propagated risk for this vector: ${scenarioGraphRisk}/100
 
 Calculate:
 1. Oil import reduction percentage
@@ -319,8 +348,9 @@ Return a JSON object conforming exactly to this structure:
     }
   }
 
-  // Local Simulation Math
-  const scale = percent / 100;
+  // Local Simulation Math informed by the Knowledge Graph propagated risk.
+  const graphAmplifier = 1 + Math.max(0, scenarioGraphRisk - 50) / 250;
+  const scale = Math.min(1.35, (percent / 100) * graphAmplifier);
   let importDrop = 0;
   let priceSpike = 0;
   let gdpDrag = 0;

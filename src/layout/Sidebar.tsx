@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Home, Globe, AlertTriangle, Anchor, Battery, Sparkles, FileText, Settings, ChevronLeft, ChevronRight, Menu
+  Home, Globe, AlertTriangle, Anchor, Battery, Sparkles, FileText, Settings, ChevronLeft, ChevronRight, Menu, Network
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -32,6 +32,13 @@ export default function Sidebar() {
       title: 'DIGITAL TWIN MAP', 
       subtitle: 'Global Logistics twin',
       path: '/digital-twin' 
+    },
+    { 
+      id: 'kg',
+      icon: <Network className="h-4.5 w-4.5" />, 
+      title: 'KNOWLEDGE GRAPH', 
+      subtitle: 'Entity risk engine',
+      path: '/knowledge-graph' 
     },
     { 
       id: 'sl',

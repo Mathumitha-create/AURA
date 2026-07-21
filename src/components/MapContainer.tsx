@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Plus, Minus, Globe, Crosshair, Anchor, Flame, Info, AlertTriangle, 
-  Layers, CloudRain, Sun, Compass, Radio, MapPin
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import maplibregl, { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { Crosshair, Factory, Layers, MapPin, Radio, Route, ShieldAlert } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import MapOverlay from './MapOverlay';
 
-// Define asset structures
+type LayerKey = 'tankers' | 'routes' | 'pipelines' | 'refineries' | 'spr' | 'ports' | 'chokepoints' | 'weather' | 'riskZones' | 'aiAlerts';
+type FeatureType = 'tanker' | 'route' | 'pipeline' | 'refinery' | 'spr' | 'port' | 'chokepoint' | 'weather' | 'risk-zone' | 'ai-alert';
+
 interface MapAsset {
   id: string;
   type: 'refinery' | 'chokepoint' | 'tanker' | 'port';
@@ -18,524 +19,621 @@ interface MapAsset {
   aiRecommendation: string;
 }
 
-const MAP_ASSETS: MapAsset[] = [
+interface DrawerAsset {
+  id: string;
+  type: FeatureType;
+  name: string;
+  status: string;
+  riskScore: number;
+  details: Record<string, string | number>;
+  aiRecommendation: string;
+}
+
+interface OperationalFeature {
+  id: string;
+  layer: LayerKey;
+  type: FeatureType;
+  name: string;
+  status: string;
+  riskScore: number;
+  coordinates: [number, number];
+  details: Record<string, string | number>;
+  aiRecommendation: string;
+}
+
+interface LineFeature {
+  id: string;
+  layer: 'routes' | 'pipelines';
+  type: 'route' | 'pipeline';
+  name: string;
+  status: string;
+  riskScore: number;
+  path: [number, number][];
+  details: Record<string, string | number>;
+  aiRecommendation: string;
+}
+
+const layerDefaults: Record<LayerKey, boolean> = {
+  tankers: true,
+  routes: true,
+  pipelines: true,
+  refineries: true,
+  spr: true,
+  ports: true,
+  chokepoints: true,
+  weather: false,
+  riskZones: true,
+  aiAlerts: true
+};
+
+const assetCoordinates: Record<string, [number, number]> = {
+  'ref-jamnagar': [69.76, 22.46],
+  'ref-vadinar': [69.72, 22.38],
+  'ref-mumbai': [72.86, 18.95],
+  'choke-hormuz': [56.45, 26.55],
+  'choke-bab': [43.35, 12.65],
+  'choke-suez': [32.35, 30.45],
+  'choke-cape': [18.47, -34.36],
+  'tanker-vishal': [50.4, -18.8],
+  'tanker-kamal': [69.1, 10.8]
+};
+
+const staticPoints: OperationalFeature[] = [
   {
-    id: 'ref-jamnagar',
-    type: 'refinery',
-    name: 'Jamnagar Refinery Complex',
-    coordinates: { x: 690, y: 220 },
-    status: 'Operational (98% load)',
-    riskScore: 25,
+    id: 'port-jamnagar',
+    layer: 'ports',
+    type: 'port',
+    name: 'Jamnagar Sikka Port',
+    status: 'High throughput',
+    riskScore: 24,
+    coordinates: [69.68, 22.43],
     details: {
-      capacityBarrelsPerDay: '1,240,000 bpd',
-      primarySuppliers: 'Saudi Arabia, Iraq, UAE',
-      inventoryReserveLevel: '85%',
-      importDependencyPercent: '88%',
-      alternativeSupplier: 'Nigeria, United States',
-      freightTransitDays: '18 days (from West Africa)',
-      estimatedSBMDelay: 'None'
+      connectedRefinery: 'Jamnagar Refinery Complex',
+      berthCapacity: 'VLCC compatible',
+      activeCargoes: 6,
+      connectedRoutes: 'Hormuz, Cape Bypass',
+      currentQueue: 'Nominal'
     },
-    aiRecommendation: 'Maintain standard inventory. Target spot-arbitrage deals with US Gulf Coast to bypass Persian Gulf pricing premiums.'
+    aiRecommendation: 'Keep VLCC berths reserved for Cape bypass arrivals and preserve SBM unload priority.'
   },
   {
-    id: 'ref-vadinar',
-    type: 'refinery',
-    name: 'Vadinar Refinery (Nayara Energy)',
-    coordinates: { x: 678, y: 215 },
-    status: 'Operational',
-    riskScore: 30,
-    details: {
-      capacityBarrelsPerDay: '400,000 bpd',
-      primarySuppliers: 'Russia, Iraq',
-      inventoryReserveLevel: '80%',
-      importDependencyPercent: '90%',
-      alternativeSupplier: 'Guyana, Brazil',
-      freightTransitDays: '25 days (from Urals)',
-      estimatedSBMDelay: 'None'
-    },
-    aiRecommendation: 'Secure Urals cargoes using non-USD transactions. Prepare alternative logistics routes via Mumbai terminal if regional swells increase.'
-  },
-  {
-    id: 'ref-mumbai',
-    type: 'refinery',
-    name: 'Mumbai Refinery (BPCL/HPCL)',
-    coordinates: { x: 700, y: 242 },
+    id: 'port-mumbai',
+    layer: 'ports',
+    type: 'port',
+    name: 'Mumbai Port Crude Terminal',
     status: 'Nominal',
-    riskScore: 20,
+    riskScore: 28,
+    coordinates: [72.84, 18.94],
     details: {
-      capacityBarrelsPerDay: '270,000 bpd',
-      primarySuppliers: 'Saudi Arabia, Iraq',
-      inventoryReserveLevel: '78%',
-      importDependencyPercent: '82%',
-      alternativeSupplier: 'Kuwait, Oman',
-      freightTransitDays: '4 days (Persian Gulf)',
-      estimatedSBMDelay: '1-2 Days (harbor congestion)'
+      connectedRefinery: 'Mumbai Refinery',
+      berthCapacity: 'Suezmax / Aframax',
+      activeCargoes: 3,
+      connectedRoutes: 'Arabian Sea coastal grid',
+      currentQueue: '1-2 days'
     },
-    aiRecommendation: 'Deploy coastal tankers to reroute local crude from Bombay High oilfields to offset short-term Middle East disruptions.'
+    aiRecommendation: 'Use coastal tanker balancing if monsoon swell delays offshore unloading.'
   },
   {
-    id: 'choke-hormuz',
-    type: 'chokepoint',
-    name: 'Strait of Hormuz',
-    coordinates: { x: 622, y: 255 },
-    status: 'High Risk (Intimidation Patrols)',
-    riskScore: 85,
+    id: 'spr-padur',
+    layer: 'spr',
+    type: 'spr',
+    name: 'Padur SPR Caverns',
+    status: 'Secure reserve',
+    riskScore: 12,
+    coordinates: [74.78, 13.08],
     details: {
-      dailyFlowVolume: '20.5 Million bpd',
-      globalTrafficPercent: '20% of consumption',
-      activeVesselsInTransit: 14,
-      threatType: 'Naval harassment, drone surveillance, cargo boardings',
-      alternativeRoutes: 'Cape of Good Hope, East-West Pipeline (Saudi)',
-      transitTimeDelta: '+11 Days (via Cape bypass)'
+      capacity: '18 Million bbl',
+      currentInventory: '16.5 Million bbl',
+      fillPercent: '91.6%',
+      connectedPorts: 'Mangalore, Jamnagar',
+      drawdownStatus: 'Hold ready'
     },
-    aiRecommendation: 'CRITICAL ALERT: Geopolitical friction points suggest rerouting tankers to Cape of Good Hope immediately. Request naval escort coordinates for critical state-owned cargoes.'
+    aiRecommendation: 'Maintain hold status unless Hormuz throughput drops below contingency threshold.'
   },
   {
-    id: 'choke-bab',
-    type: 'chokepoint',
-    name: 'Bab-el-Mandeb Strait',
-    coordinates: { x: 560, y: 295 },
-    status: 'Elevated Risk (Drone Activity)',
-    riskScore: 78,
+    id: 'spr-mangalore',
+    layer: 'spr',
+    type: 'spr',
+    name: 'Mangalore SPR Caverns',
+    status: 'Secure reserve',
+    riskScore: 14,
+    coordinates: [74.84, 12.91],
     details: {
-      dailyFlowVolume: '6.2 Million bpd',
-      globalTrafficPercent: '8% of consumption',
-      activeVesselsInTransit: 8,
-      threatType: 'Drone and missile strikes from coastal rebel batteries',
-      alternativeRoutes: 'Cape of Good Hope bypass',
-      transitTimeDelta: '+9.5 Days (via Africa)'
+      capacity: '11 Million bbl',
+      currentInventory: '9.8 Million bbl',
+      fillPercent: '89%',
+      connectedPorts: 'Mangalore crude terminal',
+      drawdownStatus: 'Ready'
     },
-    aiRecommendation: 'ADVISORY: Instruct Suez-bound tankers to divert south of Africa unless running under joint military-taskforce naval escort convoy.'
+    aiRecommendation: 'Pair release planning with west coast refinery intake schedules.'
   },
   {
-    id: 'choke-suez',
-    type: 'chokepoint',
-    name: 'Suez Canal',
-    coordinates: { x: 505, y: 172 },
-    status: 'Stable (Delayed Transits)',
-    riskScore: 50,
+    id: 'weather-arabian-sea',
+    layer: 'weather',
+    type: 'weather',
+    name: 'Arabian Sea Weather Cell',
+    status: 'Monsoon swell watch',
+    riskScore: 46,
+    coordinates: [66.2, 15.4],
     details: {
-      dailyFlowVolume: '5.5 Million bpd',
-      backlogVesselsCount: 42,
-      threatType: 'Logistical backlog from Red Sea diversions',
-      alternativeRoutes: 'Cape of Good Hope bypass',
-      transitTimeDelta: 'Vessel queue times average 36 hours'
+      wind: '26 kts',
+      waveHeight: '3.1 m',
+      affectedAssets: 'Jamnagar, Mumbai, Mangalore',
+      forecastWindow: '48 hours'
     },
-    aiRecommendation: 'Monitor Rotterdam-bound product tankers. Pre-order port berths at destination to prevent terminal demurrage fees.'
+    aiRecommendation: 'Preserve berth buffers for offshore discharge delays and monitor SBM limits.'
   },
   {
-    id: 'choke-cape',
-    type: 'chokepoint',
-    name: 'Cape of Good Hope',
-    coordinates: { x: 520, y: 415 },
-    status: 'Operational (High Traffic)',
-    riskScore: 15,
+    id: 'alert-hormuz',
+    layer: 'aiAlerts',
+    type: 'ai-alert',
+    name: 'AURA Alert: Hormuz Patrol Pattern',
+    status: 'Critical watch',
+    riskScore: 87,
+    coordinates: [56.2, 26.35],
     details: {
-      dailyFlowVolume: '8.4 Million bbl (diverted flow)',
-      vesselCongestionIndex: '180% above baseline',
-      bunkeringAvailability: 'Tight in South African ports',
-      threatType: 'Severe sea swells and marine refueling bottlenecks',
-      alternativeRoutes: 'Suez Canal (high risk)',
-      transitTimeDelta: '+10 Days average'
+      detectedPattern: 'Naval harassment clustering',
+      affectedRoute: 'Persian Gulf outbound crude',
+      confidence: '96%',
+      suggestedAction: 'Cape bypass readiness'
     },
-    aiRecommendation: 'Logistics systems must pre-book bunker fuel at Durban and Cape Town. Build a 10-day buffer supply into refining run models.'
-  },
-  {
-    id: 'tanker-vishal',
-    type: 'tanker',
-    name: 'MT Desh Vishal (VLCC)',
-    coordinates: { x: 445, y: 325 },
-    status: 'En-route Cape bypass',
-    riskScore: 15,
-    details: {
-      cargoType: 'Arabian Light Crude',
-      volumeBarrels: '2,000,000 bbl',
-      speedKnots: '14.5 kts',
-      destinationPort: 'Jamnagar Port, India',
-      etaDate: 'In 6 Days',
-      lastPingTime: '3 min ago via satellite'
-    },
-    aiRecommendation: 'Vessel successfully bypassed Bab-el-Mandeb. Refueling scheduled at Durban terminal. Maintain course.'
-  },
-  {
-    id: 'tanker-kamal',
-    type: 'tanker',
-    name: 'MT Swarna Kamal',
-    coordinates: { x: 625, y: 345 },
-    status: 'Transit (Indian Ocean)',
-    riskScore: 22,
-    details: {
-      cargoType: 'Bonny Light (Sweet)',
-      volumeBarrels: '1,000,000 bbl',
-      speedKnots: '12.8 kts',
-      destinationPort: 'Mumbai Port, India',
-      etaDate: 'In 3 Days',
-      lastPingTime: '12 min ago via VHF'
-    },
-    aiRecommendation: 'Tanker is running on schedule. Standard ocean conditions. Route clears south of meteorological cyclone zone.'
+    aiRecommendation: 'Trigger alternate sourcing plan and prepare naval escort requests for state-linked cargoes.'
   }
 ];
 
+const operationalLines: LineFeature[] = [
+  {
+    id: 'route-hormuz-jamnagar',
+    layer: 'routes',
+    type: 'route',
+    name: 'Persian Gulf to Jamnagar Route',
+    status: 'High-risk corridor',
+    riskScore: 82,
+    path: [[56.45, 26.55], [60.8, 23.4], [66.6, 21.2], [69.76, 22.46]],
+    details: {
+      connectedPorts: 'Ras Tanura, Jamnagar',
+      currentTraffic: '14 vessels',
+      transitDelta: 'Baseline',
+      insurancePremium: 'Elevated'
+    },
+    aiRecommendation: 'Reduce exposure by sequencing cargoes through alternate West Africa and Cape windows.'
+  },
+  {
+    id: 'route-cape-bypass',
+    layer: 'routes',
+    type: 'route',
+    name: 'Cape of Good Hope Bypass',
+    status: 'Active alternate route',
+    riskScore: 22,
+    path: [[18.47, -34.36], [38.2, -26.1], [55.8, -17.6], [69.76, 22.46]],
+    details: {
+      connectedPorts: 'Bonny Island, Durban, Jamnagar',
+      currentTraffic: '28 vessels',
+      transitDelta: '+10 days',
+      insurancePremium: 'Moderate'
+    },
+    aiRecommendation: 'Pre-book bunkering at Durban and smooth refinery intake around delayed arrivals.'
+  },
+  {
+    id: 'pipeline-east-west',
+    layer: 'pipelines',
+    type: 'pipeline',
+    name: 'Saudi East-West Pipeline',
+    status: 'Operational bypass',
+    riskScore: 31,
+    path: [[49.66, 25.92], [45.2, 24.4], [39.2, 21.5]],
+    details: {
+      capacity: '5 M bpd',
+      currentUtilization: 'Medium',
+      bypasses: 'Hormuz maritime exposure',
+      connectedPorts: 'Yanbu'
+    },
+    aiRecommendation: 'Use as indirect mitigation signal for Saudi export continuity under Hormuz stress.'
+  }
+];
+
+const baseStyle: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {},
+  layers: [
+    { id: 'background', type: 'background', paint: { 'background-color': '#050B14' } }
+  ]
+};
+
 export default function MapContainer() {
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  
-  // Layer toggles
-  const [showRefineries, setShowRefineries] = useState(true);
-  const [showChokepoints, setShowChokepoints] = useState(true);
-  const [showTankers, setShowTankers] = useState(true);
-  const [showShippingLanes, setShowShippingLanes] = useState(true);
-  const [showWeather, setShowWeather] = useState(false);
-  const [showSatellite, setShowSatellite] = useState(false);
-  const [mapAssets, setMapAssets] = useState<MapAsset[]>([]);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const mapNodeRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const phaseRef = useRef(0);
+  const latestPointsRef = useRef<OperationalFeature[]>([]);
+  const [backendAssets, setBackendAssets] = useState<MapAsset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<DrawerAsset | null>(null);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [layerVisibility, setLayerVisibility] = useState<Record<LayerKey, boolean>>(layerDefaults);
 
-  // Selected Overlay Asset
-  const [selectedAsset, setSelectedAsset] = useState<MapAsset | null>(null);
-  const [isOverlayOpen, setIsOverlayOpen] = useState(true);
+  const points = useMemo(() => [...backendAssets.map(toFeature), ...staticPoints], [backendAssets]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    latestPointsRef.current = points;
+  }, [points]);
 
   useEffect(() => {
     fetch('/api/ships?resource=mapAssets')
       .then(r => r.json())
-      .then((data: MapAsset[]) => {
-        setMapAssets(data);
-        setSelectedAsset(data.find(asset => asset.id === 'choke-hormuz') || data[0] || null);
-      })
-      .catch(err => console.error("Failed to load maritime map assets:", err));
+      .then((data: MapAsset[]) => setBackendAssets(data))
+      .catch(err => console.error('Failed to load maritime map assets:', err));
   }, []);
 
-  // Zoom controls
-  const zoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 3));
-  const zoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
-  const resetMap = () => {
-    setZoomLevel(1);
-    setPanOffset({ x: 0, y: 0 });
-  };
+  useEffect(() => {
+    if (!mapNodeRef.current || mapRef.current) return;
 
-  // Drag pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPanOffset({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
+    const map = new maplibregl.Map({
+      container: mapNodeRef.current,
+      style: baseStyle,
+      center: [58.5, 13.5],
+      zoom: 3.25,
+      pitch: 48,
+      bearing: -18,
+      attributionControl: false,
+      dragRotate: true
     });
-  };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+    mapRef.current = map;
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
-  const handleAssetClick = (asset: MapAsset) => {
-    setSelectedAsset(asset);
-    setIsOverlayOpen(true);
+    map.on('load', () => {
+      addSourcesAndLayers(map, latestPointsRef.current, layerVisibility, setSelectedAsset, setIsOverlayOpen);
+      startAnimations(map, latestPointsRef, phaseRef, animationRef);
+    });
+
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    updateSources(map, points);
+  }, [points]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    Object.entries(layerVisibility).forEach(([key, visible]) => {
+      layerIdsForKey(key as LayerKey).forEach(id => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+      });
+    });
+  }, [layerVisibility]);
+
+  const resetMap = () => {
+    mapRef.current?.easeTo({ center: [58.5, 13.5], zoom: 3.25, pitch: 48, bearing: -18, duration: 900 });
   };
 
   const handleActionNavigation = (page: string) => {
-    // Navigate via sidebar clicks
     const el = document.getElementById(`sidebar-item-${page === '/scenario' ? 'sl' : 'pr'}`);
     if (el) el.click();
   };
 
   return (
-    <div 
+    <div
       className="relative w-full h-[620px] bg-[#050B14] border border-[#1A2130] rounded-xl overflow-hidden shadow-2xl flex flex-col select-none"
       id="global-map-wrapper"
-      ref={containerRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
-      {/* Top Left Menu Overlay - Map Legend & Controls */}
+      <div ref={mapNodeRef} className="absolute inset-0" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(10,132,255,0.10),transparent_46%),linear-gradient(180deg,rgba(5,11,20,0.05),rgba(5,11,20,0.64))]" />
+
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-        <div className="flex gap-2">
-          <button className="bg-[#0F131C]/90 border border-[#252E3E] text-white font-mono text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 tracking-wider shadow-md">
-            <Globe className="h-3.5 w-3.5 text-brand-gold" />
-            <span>AURA SAT-GRID: NODE_09</span>
-          </button>
+        <div className="bg-[#0F131C]/90 border border-[#252E3E] text-white font-mono text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 tracking-wider shadow-md backdrop-blur-md">
+          <MapPin className="h-3.5 w-3.5 text-brand-gold" />
+          <span>AURA GEOSPATIAL INTELLIGENCE</span>
+        </div>
+        <div className="bg-[#080B11]/80 border border-[#1A2130] rounded-lg px-3 py-2 text-[9px] font-mono text-gray-500 backdrop-blur-md">
+          <span className="text-emerald-400">LIVE</span> MERCATOR GRID // PITCH + ROTATION ENABLED
         </div>
       </div>
 
-      {/* Layer Control Panel - Top Right */}
-      <div className="absolute right-4 top-4 z-20 bg-[#0F131C]/90 border border-[#252E3E] rounded-lg p-2 flex items-center gap-3 font-mono text-[9px] text-gray-400 shadow-lg backdrop-blur-md">
-        <div className="flex items-center gap-1">
-          <Layers className="h-3.5 w-3.5 text-brand-gold mr-1" />
-          <span className="font-bold uppercase tracking-wider mr-2 text-white">LENS CONTROLS</span>
+      <div className="absolute right-4 top-4 z-20 w-[270px] bg-[#0F131C]/92 border border-[#252E3E] rounded-lg p-3 font-mono text-[9px] text-gray-400 shadow-lg backdrop-blur-md">
+        <div className="flex items-center gap-1.5 border-b border-[#1A2130] pb-2 mb-2">
+          <Layers className="h-3.5 w-3.5 text-brand-gold" />
+          <span className="font-bold uppercase tracking-wider text-white">Layer Control</span>
         </div>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-white">
-          <input 
-            type="checkbox" 
-            checked={showRefineries} 
-            onChange={(e) => setShowRefineries(e.target.checked)} 
-            className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
-          />
-          <span>REFINERIES</span>
-        </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-white">
-          <input 
-            type="checkbox" 
-            checked={showChokepoints} 
-            onChange={(e) => setShowChokepoints(e.target.checked)} 
-            className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
-          />
-          <span>CHOKEPOINTS</span>
-        </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-white">
-          <input 
-            type="checkbox" 
-            checked={showTankers} 
-            onChange={(e) => setShowTankers(e.target.checked)} 
-            className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
-          />
-          <span>TANKERS</span>
-        </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-white">
-          <input 
-            type="checkbox" 
-            checked={showWeather} 
-            onChange={(e) => setShowWeather(e.target.checked)} 
-            className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
-          />
-          <span>WEATHER</span>
-        </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-white">
-          <input 
-            type="checkbox" 
-            checked={showSatellite} 
-            onChange={(e) => setShowSatellite(e.target.checked)} 
-            className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
-          />
-          <span>SAT GRID</span>
-        </label>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          {(Object.keys(layerDefaults) as LayerKey[]).map(key => (
+            <label key={key} className="flex items-center gap-1.5 cursor-pointer hover:text-white">
+              <input
+                type="checkbox"
+                checked={layerVisibility[key]}
+                onChange={(e) => setLayerVisibility(prev => ({ ...prev, [key]: e.target.checked }))}
+                className="rounded border-[#252E3E] text-brand-gold h-3 w-3 accent-brand-gold cursor-pointer"
+              />
+              <span>{layerLabel(key)}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
-      {/* Right Side Zoom & Re-Center Actions */}
-      <div className="absolute right-4 bottom-4 z-20 flex flex-col gap-2">
-        <button 
-          onClick={zoomIn}
-          className="w-8 h-8 bg-[#0F131C]/90 hover:bg-[#1A2130] border border-[#252E3E] text-white rounded-lg flex items-center justify-center transition-colors cursor-pointer shadow-md group"
-          title="Zoom In"
-        >
-          <Plus className="h-4 w-4 text-gray-400 group-hover:text-white" />
-        </button>
-        <button 
-          onClick={zoomOut}
-          className="w-8 h-8 bg-[#0F131C]/90 hover:bg-[#1A2130] border border-[#252E3E] text-white rounded-lg flex items-center justify-center transition-colors cursor-pointer shadow-md group"
-          title="Zoom Out"
-        >
-          <Minus className="h-4 w-4 text-gray-400 group-hover:text-white" />
-        </button>
-        <button 
+      <div className="absolute left-4 bottom-4 z-20 flex items-center gap-2">
+        <button
           onClick={resetMap}
-          className="w-8 h-8 bg-[#0F131C]/90 hover:bg-[#1A2130] border border-[#252E3E] text-white rounded-lg flex items-center justify-center transition-colors cursor-pointer shadow-md group"
+          className="h-8 bg-[#0F131C]/90 hover:bg-[#1A2130] border border-[#252E3E] text-white rounded-lg px-3 flex items-center gap-2 transition-colors cursor-pointer shadow-md font-mono text-[9px] font-bold"
           title="Reset View"
         >
-          <Crosshair className="h-4 w-4 text-gray-400 group-hover:text-white" />
+          <Crosshair className="h-4 w-4 text-gray-400" />
+          <span>RECENTER</span>
         </button>
-      </div>
-
-      {/* Main SVG Map Canvas */}
-      <div className="flex-1 w-full relative overflow-hidden bg-[#050B14] cursor-grab active:cursor-grabbing">
-        {/* Hex grid backdrop */}
-        <div className="absolute inset-0 cyber-grid-fine opacity-20 pointer-events-none" />
-
-        {/* Orbit Grid Overlay when Sat Grid layer is active */}
-        {showSatellite && (
-          <div className="absolute inset-0 bg-cyan-500/[0.02] border border-cyan-500/10 pointer-events-none z-10 font-mono text-[8px] text-cyan-500/40 p-4">
-            <span>GRID SYSTEM: Mercator Ellipsoidal WGS84</span><br />
-            <span>ALTITUDE: 842KM // SATELLITE: CARTOSAT-3B</span>
-            <div className="absolute top-1/2 left-0 right-0 border-t border-dashed border-cyan-500/20" />
-            <div className="absolute left-1/2 top-0 bottom-0 border-l border-dashed border-cyan-500/20" />
-          </div>
-        )}
-
-        <div 
-          className="w-full h-full origin-center transition-transform duration-100 flex items-center justify-center"
-          style={{ 
-            transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)` 
-          }}
-        >
-          <svg 
-            viewBox="0 0 1000 500" 
-            className="w-full h-full max-w-5xl text-gray-700 pointer-events-auto"
-            style={{ minWidth: '950px' }}
-          >
-            <defs>
-              <radialGradient id="threatGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#EB5757" stopOpacity="0.4" />
-                <stop offset="60%" stopColor="#EB5757" stopOpacity="0.1" />
-                <stop offset="100%" stopColor="#EB5757" stopOpacity="0" />
-              </radialGradient>
-              <radialGradient id="activePortGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
-              </radialGradient>
-              <radialGradient id="cycloneGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-                <stop offset="70%" stopColor="#3B82F6" stopOpacity="0.08" />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* Stylized Continents (Palantir Gotham Aesthetic) */}
-            <g opacity={showSatellite ? "0.45" : "0.75"}>
-              {/* North America */}
-              <path d="M100 120 L160 110 L190 90 L240 100 L280 120 L300 150 L270 200 L240 220 L210 210 L180 230 L165 250 L150 250 L140 210 L110 190 L90 150 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-              {/* Greenland */}
-              <path d="M320 60 L380 50 L420 70 L390 110 L340 100 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-              {/* South America */}
-              <path d="M230 270 L280 290 L320 330 L310 380 L290 420 L270 450 L260 470 L250 440 L240 370 L220 320 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-              {/* Africa */}
-              <path d="M440 210 L500 190 L560 210 L580 240 L600 280 L590 320 L550 380 L520 420 L510 400 L500 350 L470 310 L440 280 L420 250 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-              {/* Eurasia */}
-              <path d="M440 120 L500 100 L580 90 L640 80 L720 90 L800 80 L880 90 L920 120 L910 170 L850 210 L810 240 L780 220 L740 250 L710 270 L640 240 L580 200 L520 180 L470 170 L440 150 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-              {/* Australia */}
-              <path d="M780 340 L840 330 L870 360 L850 400 L810 410 L770 380 Z" fill="#0D1321" stroke="#1E293B" strokeWidth="1" />
-            </g>
-
-            {/* Maritime Shipping Lanes Layer */}
-            {showShippingLanes && (
-              <g opacity="0.6">
-                {/* Cape of Good Hope Bypass (Active - Green) */}
-                <path 
-                  d="M 800 270 Q 720 350 600 370 T 520 415 Q 420 350 310 290 T 160 215" 
-                  fill="none" 
-                  stroke="#10B981" 
-                  strokeWidth="1.5" 
-                  strokeDasharray="4 4"
-                  id="lane-cape"
-                />
-                <text x="440" y="380" fill="#10B981" fontSize="6" fontFamily="monospace" opacity="0.8">CAPE BYPASS (ACTIVE)</text>
-
-                {/* Suez Canal / Bab-el-Mandeb Route (Disrupted / Red) */}
-                <path 
-                  d="M 622 255 Q 580 260 560 295 Q 520 230 505 172" 
-                  fill="none" 
-                  stroke="#EF4444" 
-                  strokeWidth="1.5" 
-                  strokeDasharray="3 3"
-                  className="animate-pulse"
-                  id="lane-suez"
-                />
-                <text x="510" y="240" fill="#EF4444" fontSize="6" fontFamily="monospace" opacity="0.8">SUEZ ROUTE (DISRUPTED)</text>
-
-                {/* Indo-Pacific lanes */}
-                <path 
-                  d="M 790 265 L 700 220" 
-                  fill="none" 
-                  stroke="#0A84FF" 
-                  strokeWidth="1.2" 
-                  strokeDasharray="4 4"
-                />
-              </g>
-            )}
-
-            {/* Weather Overlay - Cyclone warning in Indian Ocean */}
-            {showWeather && (
-              <g transform="translate(680, 270)" className="animate-spin-slow" style={{ transformOrigin: '680px 270px' }}>
-                <circle cx="680" cy="270" r="40" fill="url(#cycloneGlow)" />
-                <path d="M 660 250 Q 680 240 700 260 T 660 290" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeOpacity="0.4" />
-                <path d="M 670 260 Q 690 250 710 270 T 670 300" fill="none" stroke="#3B82F6" strokeWidth="1.2" strokeOpacity="0.3" strokeDasharray="3 3" />
-                <text x="655" y="272" fill="#3B82F6" fontSize="6" fontWeight="bold" fontFamily="monospace" opacity="0.8">CYCLONE WARN</text>
-              </g>
-            )}
-
-            {/* Assets: Refineries */}
-            {showRefineries && mapAssets.filter(a => a.type === 'refinery').map(asset => (
-              <g 
-                key={asset.id} 
-                transform={`translate(${asset.coordinates.x}, ${asset.coordinates.y})`}
-                className="cursor-pointer"
-                onClick={() => handleAssetClick(asset)}
-              >
-                <circle cx="0" cy="0" r="12" fill="transparent" />
-                {/* Outer pulsing ring */}
-                <circle cx="0" cy="0" r="6" fill="none" stroke="#F2C94C" strokeWidth="1" className="opacity-70 animate-ping" />
-                {/* Core square */}
-                <rect x="-3" y="-3" width="6" height="6" fill="#F2C94C" rx="1" />
-                <text x="8" y="2" fill="#FFFFFF" fontSize="7" fontWeight="bold" fontFamily="monospace" className="drop-shadow-md">
-                  {asset.name.split(' ')[0]}
-                </text>
-              </g>
-            ))}
-
-            {/* Assets: Chokepoints */}
-            {showChokepoints && mapAssets.filter(a => a.type === 'chokepoint').map(asset => {
-              const isHighRisk = asset.riskScore > 75;
-              return (
-                <g 
-                  key={asset.id} 
-                  transform={`translate(${asset.coordinates.x}, ${asset.coordinates.y})`}
-                  className="cursor-pointer"
-                  onClick={() => handleAssetClick(asset)}
-                >
-                  <circle cx="0" cy="0" r="20" fill="transparent" />
-                  <circle 
-                    cx="0" 
-                    cy="0" 
-                    r={isHighRisk ? 15 : 10} 
-                    fill={isHighRisk ? "url(#threatGlow)" : "url(#activePortGlow)"} 
-                    className="animate-pulse" 
-                  />
-                  <circle 
-                    cx="0" 
-                    cy="0" 
-                    r="4" 
-                    fill={isHighRisk ? "#EF4444" : "#22D3EE"} 
-                  />
-                  <text x="8" y="2" fill={isHighRisk ? "#EF4444" : "#22D3EE"} fontSize="7" fontWeight="bold" fontFamily="monospace" className="drop-shadow-md">
-                    {asset.name}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Assets: Live Tankers */}
-            {showTankers && mapAssets.filter(a => a.type === 'tanker').map(asset => (
-              <g 
-                key={asset.id} 
-                transform={`translate(${asset.coordinates.x}, ${asset.coordinates.y})`}
-                className="cursor-pointer"
-                onClick={() => handleAssetClick(asset)}
-              >
-                {/* Ship outline mock */}
-                <rect x="-5" y="-2.5" width="10" height="5" fill="#0A84FF" rx="2" className="animate-pulse" />
-                <circle cx="0" cy="0" r="1.2" fill="#FFFFFF" />
-                <text x="7" y="2" fill="#0A84FF" fontSize="6.5" fontFamily="monospace" fontWeight="bold">
-                  {asset.name.split(' ')[1]}
-                </text>
-              </g>
-            ))}
-
-            {/* India Portal marker - Core hub */}
-            <g transform="translate(710, 245)">
-              <circle cx="0" cy="0" r="8" fill="none" stroke="#10B981" strokeWidth="1" className="animate-ping" />
-              <circle cx="0" cy="0" r="3" fill="#10B981" />
-              <MapPin className="h-4 w-4 text-[#10B981] -translate-x-2 -translate-y-4 animate-bounce" />
-            </g>
-          </svg>
+        <div className="bg-[#0F131C]/90 border border-[#252E3E] rounded-lg px-3 py-2 font-mono text-[8px] text-gray-500 backdrop-blur-md">
+          DRAG TO PAN // CTRL+DRAG ROTATES // SCROLL ZOOMS
         </div>
       </div>
 
-      {/* Slide-over details info panel */}
+      <div className="absolute bottom-4 right-16 z-20 hidden xl:flex items-center gap-2 bg-[#0F131C]/90 border border-[#252E3E] rounded-lg px-3 py-2 font-mono text-[8px] text-gray-500 backdrop-blur-md">
+        <span className="flex items-center gap-1"><Radio className="h-3 w-3 text-[#0A84FF]" /> TANKERS</span>
+        <span className="flex items-center gap-1"><Route className="h-3 w-3 text-emerald-400" /> ROUTES</span>
+        <span className="flex items-center gap-1"><Factory className="h-3 w-3 text-brand-gold" /> REFINERIES</span>
+        <span className="flex items-center gap-1"><ShieldAlert className="h-3 w-3 text-red-500" /> RISK</span>
+      </div>
+
       <AnimatePresence>
         {isOverlayOpen && selectedAsset && (
-          <MapOverlay 
-            isOpen={isOverlayOpen} 
-            onClose={() => setIsOverlayOpen(false)} 
-            data={selectedAsset} 
+          <MapOverlay
+            isOpen={isOverlayOpen}
+            onClose={() => setIsOverlayOpen(false)}
+            data={selectedAsset}
             onActionClick={handleActionNavigation}
           />
         )}
       </AnimatePresence>
     </div>
   );
+}
+
+function addSourcesAndLayers(
+  map: MapLibreMap,
+  points: OperationalFeature[],
+  visibility: Record<LayerKey, boolean>,
+  setSelectedAsset: React.Dispatch<React.SetStateAction<DrawerAsset | null>>,
+  setIsOverlayOpen: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  map.addSource('routes', { type: 'geojson', data: lineCollection(operationalLines, 'routes') });
+  map.addSource('pipelines', { type: 'geojson', data: lineCollection(operationalLines, 'pipelines') });
+  map.addSource('riskZones', { type: 'geojson', data: riskZoneCollection(points) });
+  (['refineries', 'chokepoints', 'tankers', 'ports', 'spr', 'weather', 'aiAlerts'] as LayerKey[]).forEach(layer => {
+    map.addSource(layer, { type: 'geojson', data: pointCollection(points, layer) });
+  });
+
+  map.addLayer({
+    id: 'riskZones-fill',
+    type: 'circle',
+    source: 'riskZones',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 28, 6, 90],
+      'circle-color': ['case', ['>', ['get', 'riskScore'], 75], '#EF4444', ['>', ['get', 'riskScore'], 45], '#F59E0B', '#0A84FF'],
+      'circle-opacity': 0.11,
+      'circle-blur': 0.25,
+      'circle-stroke-color': ['case', ['>', ['get', 'riskScore'], 75], '#EF4444', '#0A84FF'],
+      'circle-stroke-opacity': 0.22,
+      'circle-stroke-width': 1
+    }
+  });
+
+  addLineLayer(map, 'routes-line', 'routes', '#10B981', 3, 0.76);
+  addLineLayer(map, 'routes-flow', 'routes', '#F2C94C', 1.4, 0.92, [0, 4, 2]);
+  addLineLayer(map, 'pipelines-line', 'pipelines', '#7C3AED', 2.4, 0.72);
+  addLineLayer(map, 'pipelines-flow', 'pipelines', '#C4B5FD', 1.1, 0.88, [0, 3, 1.5]);
+
+  addCircleLayer(map, 'ports-points', 'ports', '#22D3EE', 5);
+  addCircleLayer(map, 'spr-points', 'spr', '#A855F7', 6);
+  addCircleLayer(map, 'refineries-points', 'refineries', '#F2C94C', 6);
+  addCircleLayer(map, 'chokepoints-points', 'chokepoints', '#EF4444', 6);
+  addCircleLayer(map, 'weather-points', 'weather', '#3B82F6', 8);
+  addCircleLayer(map, 'aiAlerts-points', 'aiAlerts', '#FB7185', 7);
+  addCircleLayer(map, 'tankers-points', 'tankers', '#0A84FF', 5);
+
+  const clickable = ['routes-line', 'pipelines-line', 'ports-points', 'spr-points', 'refineries-points', 'chokepoints-points', 'weather-points', 'aiAlerts-points', 'tankers-points', 'riskZones-fill'];
+  clickable.forEach(id => {
+    map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+    map.on('click', id, event => {
+      const feature = event.features?.[0];
+      if (!feature?.properties) return;
+      setSelectedAsset(drawerAssetFromProperties(feature.properties));
+      setIsOverlayOpen(true);
+    });
+  });
+
+  Object.entries(visibility).forEach(([key, visible]) => {
+    layerIdsForKey(key as LayerKey).forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+    });
+  });
+}
+
+function updateSources(map: MapLibreMap, points: OperationalFeature[]) {
+  (['refineries', 'chokepoints', 'tankers', 'ports', 'spr', 'weather', 'aiAlerts'] as LayerKey[]).forEach(layer => {
+    const source = map.getSource(layer) as GeoJSONSource | undefined;
+    source?.setData(pointCollection(points, layer));
+  });
+  (map.getSource('riskZones') as GeoJSONSource | undefined)?.setData(riskZoneCollection(points));
+}
+
+function startAnimations(
+  map: MapLibreMap,
+  latestPointsRef: React.MutableRefObject<OperationalFeature[]>,
+  phaseRef: React.MutableRefObject<number>,
+  animationRef: React.MutableRefObject<number | null>
+) {
+  const tick = () => {
+    phaseRef.current += 0.0025;
+    const moved = latestPointsRef.current.map(point => {
+      if (point.layer !== 'tankers') return point;
+      const path = point.id === 'tanker-vishal' ? operationalLines[1].path : operationalLines[0].path;
+      return { ...point, coordinates: interpolatePath(path, phaseRef.current + (point.id === 'tanker-vishal' ? 0 : 0.34)) };
+    });
+    (map.getSource('tankers') as GeoJSONSource | undefined)?.setData(pointCollection(moved, 'tankers'));
+
+    const dashOffset = Math.floor((phaseRef.current * 100) % 6);
+    if (map.getLayer('routes-flow')) map.setPaintProperty('routes-flow', 'line-dasharray', [dashOffset, 4, 2]);
+    if (map.getLayer('pipelines-flow')) map.setPaintProperty('pipelines-flow', 'line-dasharray', [dashOffset, 3, 1.5]);
+
+    animationRef.current = requestAnimationFrame(tick);
+  };
+
+  animationRef.current = requestAnimationFrame(tick);
+}
+
+function toFeature(asset: MapAsset): OperationalFeature {
+  const coordinates = assetCoordinates[asset.id] || [Number(asset.coordinates.x), Number(asset.coordinates.y)];
+  const layer: LayerKey = asset.type === 'tanker' ? 'tankers' : asset.type === 'chokepoint' ? 'chokepoints' : asset.type === 'port' ? 'ports' : 'refineries';
+
+  return {
+    id: asset.id,
+    layer,
+    type: asset.type,
+    name: asset.name,
+    status: asset.status,
+    riskScore: asset.riskScore,
+    coordinates,
+    details: asset.details,
+    aiRecommendation: asset.aiRecommendation
+  };
+}
+
+function pointCollection(features: OperationalFeature[], layer: LayerKey): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: features.filter(feature => feature.layer === layer).map(feature => ({
+      type: 'Feature',
+      id: feature.id,
+      geometry: { type: 'Point', coordinates: feature.coordinates },
+      properties: encodeProperties(feature)
+    }))
+  };
+}
+
+function lineCollection(features: LineFeature[], layer: 'routes' | 'pipelines'): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: features.filter(feature => feature.layer === layer).map(feature => ({
+      type: 'Feature',
+      id: feature.id,
+      geometry: { type: 'LineString', coordinates: feature.path },
+      properties: encodeProperties(feature)
+    }))
+  };
+}
+
+function riskZoneCollection(points: OperationalFeature[]): GeoJSON.FeatureCollection {
+  const zones = points
+    .filter(point => ['chokepoints', 'weather', 'aiAlerts'].includes(point.layer))
+    .map(point => ({
+      type: 'Feature' as const,
+      id: `${point.id}-risk`,
+      geometry: { type: 'Point' as const, coordinates: point.coordinates },
+      properties: encodeProperties({ ...point, id: `${point.id}-risk`, type: 'risk-zone', layer: 'riskZones', name: `${point.name} Risk Zone` })
+    }));
+
+  return { type: 'FeatureCollection', features: zones };
+}
+
+function encodeProperties(feature: OperationalFeature | LineFeature) {
+  return {
+    id: feature.id,
+    layer: feature.layer,
+    type: feature.type,
+    name: feature.name,
+    status: feature.status,
+    riskScore: feature.riskScore,
+    details: JSON.stringify(feature.details),
+    aiRecommendation: feature.aiRecommendation
+  };
+}
+
+function drawerAssetFromProperties(properties: any): DrawerAsset {
+  return {
+    id: String(properties.id),
+    type: properties.type as FeatureType,
+    name: String(properties.name),
+    status: String(properties.status),
+    riskScore: Number(properties.riskScore || 0),
+    details: typeof properties.details === 'string' ? JSON.parse(properties.details) : properties.details || {},
+    aiRecommendation: String(properties.aiRecommendation || '')
+  };
+}
+
+function addLineLayer(map: MapLibreMap, id: string, source: string, color: string, width: number, opacity: number, dasharray?: number[]) {
+  map.addLayer({
+    id,
+    type: 'line',
+    source,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': color,
+      'line-width': width,
+      'line-opacity': opacity,
+      ...(dasharray ? { 'line-dasharray': dasharray } : {})
+    }
+  });
+}
+
+function addCircleLayer(map: MapLibreMap, id: string, source: string, color: string, radius: number) {
+  map.addLayer({
+    id,
+    type: 'circle',
+    source,
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, radius, 7, radius + 4],
+      'circle-color': color,
+      'circle-opacity': 0.92,
+      'circle-stroke-color': '#FFFFFF',
+      'circle-stroke-width': 1,
+      'circle-stroke-opacity': 0.45,
+      'circle-blur': 0.04
+    }
+  });
+}
+
+function interpolatePath(path: [number, number][], phase: number): [number, number] {
+  const normalized = phase % 1;
+  const segmentCount = path.length - 1;
+  const segment = Math.min(segmentCount - 1, Math.floor(normalized * segmentCount));
+  const localT = normalized * segmentCount - segment;
+  const start = path[segment];
+  const end = path[segment + 1];
+  return [start[0] + (end[0] - start[0]) * localT, start[1] + (end[1] - start[1]) * localT];
+}
+
+function layerIdsForKey(key: LayerKey) {
+  const map: Record<LayerKey, string[]> = {
+    tankers: ['tankers-points'],
+    routes: ['routes-line', 'routes-flow'],
+    pipelines: ['pipelines-line', 'pipelines-flow'],
+    refineries: ['refineries-points'],
+    spr: ['spr-points'],
+    ports: ['ports-points'],
+    chokepoints: ['chokepoints-points'],
+    weather: ['weather-points'],
+    riskZones: ['riskZones-fill'],
+    aiAlerts: ['aiAlerts-points']
+  };
+  return map[key];
+}
+
+function layerLabel(key: LayerKey) {
+  const labels: Record<LayerKey, string> = {
+    tankers: 'Oil Tankers',
+    routes: 'Shipping Routes',
+    pipelines: 'Pipelines',
+    refineries: 'Refineries',
+    spr: 'SPR',
+    ports: 'Ports',
+    chokepoints: 'Chokepoints',
+    weather: 'Weather',
+    riskZones: 'Risk Zones',
+    aiAlerts: 'AI Alerts'
+  };
+  return labels[key];
 }

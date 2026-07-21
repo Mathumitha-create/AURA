@@ -11,6 +11,7 @@ import SprManager from './pages/SprManager';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AiCopilotPage from './pages/AiCopilotPage';
+import KnowledgeGraph from './pages/KnowledgeGraph';
 import { UserSession } from './types';
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
             <Route element={<DashboardLayout session={session} onLogout={handleLogout} />}>
               <Route path="/" element={<CommandCenter />} />
               <Route path="/digital-twin" element={<DigitalTwin />} />
+              <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
               <Route path="/scenario" element={<ScenarioLab />} />
               <Route path="/procurement" element={<Procurement />} />
               <Route path="/spr" element={<SprManager />} />

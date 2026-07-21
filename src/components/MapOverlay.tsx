@@ -7,7 +7,7 @@ interface MapOverlayProps {
   onClose: () => void;
   data: {
     id: string;
-    type: 'refinery' | 'chokepoint' | 'tanker' | 'port';
+    type: 'refinery' | 'chokepoint' | 'tanker' | 'port' | 'route' | 'pipeline' | 'spr' | 'weather' | 'risk-zone' | 'ai-alert';
     name: string;
     status: string;
     riskScore: number;
@@ -114,7 +114,7 @@ export default function MapOverlay({ isOpen, onClose, data, onActionClick }: Map
 
       {/* Quick Access Footer button links */}
       <div className="p-3 border-t border-[#1A2130] bg-[#080B11]/50 space-y-2">
-        {data.type === 'chokepoint' && onActionClick && (
+        {(data.type === 'chokepoint' || data.type === 'risk-zone' || data.type === 'ai-alert') && onActionClick && (
           <button 
             onClick={() => onActionClick('/scenario')}
             className="w-full bg-[#10B981]/10 hover:bg-[#10B981]/25 border border-[#10B981]/30 text-[#10B981] py-2 rounded font-sans font-bold uppercase tracking-wider text-[9px] flex items-center justify-center gap-1.5 transition-all cursor-pointer"
@@ -123,7 +123,7 @@ export default function MapOverlay({ isOpen, onClose, data, onActionClick }: Map
             <span>RUN DISRUPTION SIMULATION</span>
           </button>
         )}
-        {data.type === 'refinery' && onActionClick && (
+        {(data.type === 'refinery' || data.type === 'port' || data.type === 'route') && onActionClick && (
           <button 
             onClick={() => onActionClick('/procurement')}
             className="w-full bg-[#0A84FF]/10 hover:bg-[#0A84FF]/25 border border-[#0A84FF]/30 text-[#0A84FF] py-2 rounded font-sans font-bold uppercase tracking-wider text-[9px] flex items-center justify-center gap-1.5 transition-all cursor-pointer"

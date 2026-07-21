@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { db, Article } from "./db";
+import { graphContextForQuestion } from "./services/graphService";
 
 // Initialize Gemini client helper
 function getGeminiClient(): GoogleGenAI | null {
@@ -62,6 +63,7 @@ export async function queryAuraCopilot(question: string): Promise<CopilotRespons
   const ai = getGeminiClient();
   const relevantDocs = queryKnowledgeBase(question);
   const riskScores = db.get("riskScores");
+  const graphContext = graphContextForQuestion(question);
 
   const contextStr = relevantDocs.map(doc => {
     return `[Source: ${doc.source} | Date: ${doc.publishedAt}]
@@ -80,6 +82,9 @@ ${contextStr || "No specific security articles match the search term. Assume cur
 
 Current Regional Risk Indices:
 ${riskStr}
+
+Knowledge Graph Context:
+${graphContext || "No directly matching graph nodes. Use current graph baseline for reasoning."}
 
 Your response must be returned as a strict JSON object conforming to this schema:
 {

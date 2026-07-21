@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { createApiRouter } from "./server/routes";
+import { graphRouter } from "./server/routes/graph";
 import { startProviderScheduler } from "./server/schedulers/providerScheduler";
 
 dotenv.config();
@@ -12,6 +13,7 @@ const PORT = 3000;
 
 app.use(express.json());
 app.use("/api", createApiRouter());
+app.use("/graph", graphRouter);
 
 startProviderScheduler();
 
